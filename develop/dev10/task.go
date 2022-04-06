@@ -1,20 +1,40 @@
 package main
 
-/*
-=== Утилита telnet ===
-
-Реализовать примитивный telnet клиент:
-Примеры вызовов:
-go-telnet --timeout=10s host port go-telnet mysite.ru 8080 go-telnet --timeout=3s 1.1.1.1 123
-
-Программа должна подключаться к указанному хосту (ip или доменное имя) и порту по протоколу TCP.
-После подключения STDIN программы должен записываться в сокет, а данные полученные и сокета должны выводиться в STDOUT
-Опционально в программу можно передать таймаут на подключение к серверу (через аргумент --timeout, по умолчанию 10s).
-
-При нажатии Ctrl+D программа должна закрывать сокет и завершаться. Если сокет закрывается со стороны сервера, программа должна также завершаться.
-При подключении к несуществующему сервер, программа должна завершаться через timeout.
-*/
+import (
+	"bufio"
+	"fmt"
+	"net"
+)
 
 func main() {
+	listner, err := net.Listen("tcp", ":8081")
+	if err != nil {
+		panic(err)
+	}
+	for {
+		conn, err := listner.Accept()
+		if err != nil {
+			panic(err)
+		}
+		go handleConnection(conn)
+	}
+}
 
+func handleConnection(conn net.Conn) {
+	name := conn.RemoteAddr().String()
+	fmt.Printf("%+v connected\n", name)
+	conn.Write([]byte("Hello, " + name + "\n\r"))
+	defer conn.Close()
+	scanner := bufio.NewScanner(conn)
+	for scanner.Scan() {
+		text := scanner.Text()
+		if text == "Exit" {
+			conn.Write([]byte("Bye\n\r"))
+			fmt.Println(name, "disconnected")
+			break
+		} else if text != "" {
+			fmt.Println(name, "enters", text)
+			conn.Write([]byte("You enter " + text + "\n\r"))
+		}
+	}
 }

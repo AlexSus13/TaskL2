@@ -1,5 +1,19 @@
 package main
 
+import (
+	"dev11/app"
+	"dev11/config"
+	"dev11/storage"
+
+	"github.com/sirupsen/logrus"
+
+	"context"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+)
 /*
 === HTTP server ===
 
@@ -23,5 +37,76 @@ package main
 */
 
 func main() {
+	MyLogger := logrus.New()
 
+	MyLogger.Formatter = &logrus.JSONFormatter{
+		DisableTimestamp: false,
+		PrettyPrint:      true,
+	}
+
+	config, err := config.Get()
+	if err != nil {
+		MyLogger.WithFields(logrus.Fields{
+			"func":    "config.Get",
+			"package": "main",
+		}).Fatal(err)
+	}
+
+	EventStorage := storage.New()
+
+	app := app.NewApp(MyLogger, config, EventStorage)
+
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/create_event", app.CreateEvent)
+	mux.HandleFunc("/update_event", app.UpdateEvent)
+	mux.HandleFunc("/delete_event", app.DeleteEvent)
+	mux.HandleFunc("/events_for_day", app.GetEventsForDay)
+	mux.HandleFunc("/events_for_week", app.GetEventsForWeek)
+	mux.HandleFunc("/events_for_month", app.GetEventsForMonth)
+
+	MWmux := app.LogMiddleware(mux)
+
+	srv := &http.Server{
+		Addr:         config.Host + ":" + config.Port,
+		Handler:      MWmux,
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
+	}
+
+	go func() {
+		err = srv.ListenAndServe()
+		switch err {
+		case http.ErrServerClosed:
+			MyLogger.Info("Server at :8080 port Stopped")
+		default:
+			MyLogger.WithFields(logrus.Fields{
+				"func":    "srv.ListenAndServe",
+				"package": "main",
+			}).Fatal(err)
+		}
+	}()
+
+	MyLogger.Info("Server at :8080 port Start")
+
+	signalChanel := make(chan os.Signal, 1)
+	defer close(signalChanel)
+
+	signal.Notify(signalChanel, syscall.SIGTERM, syscall.SIGINT)
+
+	<-signalChanel
+
+	MyLogger.Info("server at :8080 port Shutting Down")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+
+	err = srv.Shutdown(ctx)
+	if err != nil {
+		MyLogger.WithFields(logrus.Fields{
+			"func":    "srv.Shutdown",
+			"package": "main",
+		}).Fatal(err)
+	}
+
+	cancel()
 }
