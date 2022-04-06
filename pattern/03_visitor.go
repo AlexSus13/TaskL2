@@ -7,7 +7,7 @@ package main
 
 import "fmt"
 
-//Шаблон проектирования посетителей — это поведенческий шаблон проектирования, 
+//Шаблон проектирования посетителей — это поведенческий шаблон проектирования,
 //который позволяет добавлять поведение к структуре, фактически не изменяя структуру.
 type Employee interface {
 	FullName()
@@ -24,6 +24,7 @@ type Cat struct {
 func (c Cat) FullName() {
 	fmt.Println("Cat: ", c.Name, " ", c.Breed)
 }
+
 //добавим интерфейс к структуре Cat
 func (c Cat) Accept(v Visitor) {
 	v.VisitCat(c)
@@ -44,19 +45,23 @@ func (d Dog) FullName() {
 func (d Dog) Accept(v Visitor) {
 	v.VisitDog(d)
 }
+
 //Добавленные интерфейсы
 type Visitor interface {
 	VisitCat(c Cat)
 	VisitDog(d Dog)
 }
+
 //Новая структура переноска для животных
 type AnimalCarrier struct {
 	bonusWeight int
 }
+
 //Метод новый структуры
 func (ac AnimalCarrier) VisitCat(c Cat) {
 	fmt.Println(c.Weight + ac.bonusWeight)
 }
+
 //Метод новой структуры
 func (ac AnimalCarrier) VisitDog(d Dog) {
 	fmt.Println(d.Weight + ac.bonusWeight)
@@ -73,4 +78,3 @@ func main() {
 	dog.FullName()
 	dog.Accept(AnimalCarrier{3})
 }
-

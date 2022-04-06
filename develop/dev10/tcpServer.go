@@ -21,10 +21,13 @@ func main() {
 }
 
 func handleConnection(conn net.Conn) {
+
 	name := conn.RemoteAddr().String()
+
 	fmt.Printf("%+v connected\n", name)
 	conn.Write([]byte("Hello, " + name + "\n\r"))
 	defer conn.Close()
+
 	scanner := bufio.NewScanner(conn)
 	for scanner.Scan() {
 		text := scanner.Text()

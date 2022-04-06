@@ -100,6 +100,7 @@ func unpackStr(s string, mNum, mSlash map[int]string) (string, error) {
 	}
 	return unpackedS, nil
 }
+
 func unpackWithSlash(s string, mNum, mSlash map[int]string) (string, error) {
 
 	var unpackedS string

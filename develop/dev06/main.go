@@ -55,38 +55,13 @@ func (ObC *ObjectCut) Cut() error {
 	scanner := bufio.NewScanner(os.Stdin)
 	//Scan переводит Scanner на следующий объект, который затем будет доступен с помощью метода Bytes или Text.
 	//Он возвращает значение false, когда сканирование останавливается, либо при достижении конца ввода, либо при ошибке.
-	scanner.Scan()
+	for scanner.Scan() {
 
-	ObC.data = append(ObC.data, scanner.Text()) //Заносим данные в слайс
+		ObC.data = append(ObC.data, scanner.Text()) //Заносим данные в слайс
 
-	for _, line := range ObC.data {
-		if strings.Contains(line, *ObC.d) { //Если разделитель присутствует в строке
-
-			dline := strings.Split(line, *ObC.d) //Получим массив элементов строки разделенных разделителем
-
-			if *ObC.f <= len(dline) { //Если указанный номер калонки есть в слайсе
-				fmt.Println(dline[*ObC.f-1])
-			} else {
-				fmt.Println()
-			}
-		} else { //Если разделител нет в строке
-			if *ObC.s { //и установлен флаг вывода строки без разделителей
-				fmt.Println(line)
-				continue
-			}
-			break
-		}
-	}
-
-	//После того, как Scan вернет значение false, метод Err вернет любую ошибку, возникшую во время сканирования,
-	//за исключением того, что если это был io.EOF, Err вернет значение nil.
-	if err := scanner.Err(); err != nil {
-		return err
-	}
-	/*
-		fmt.Println("ObC.data = ", ObC.data)
 		for _, line := range ObC.data {
 			if strings.Contains(line, *ObC.d) { //Если разделитель присутствует в строке
+
 				dline := strings.Split(line, *ObC.d) //Получим массив элементов строки разделенных разделителем
 
 				if *ObC.f <= len(dline) { //Если указанный номер калонки есть в слайсе
@@ -95,14 +70,21 @@ func (ObC *ObjectCut) Cut() error {
 					fmt.Println()
 				}
 			} else { //Если разделител нет в строке
-				if !*ObC.s { //и установлен флаг вывода строки без разделителей
+				if *ObC.s { //и установлен флаг вывода строки без разделителей
 					fmt.Println(line)
 					continue
 				}
 				break
 			}
 		}
-	*/
+
+	}
+	//После того, как Scan вернет значение false, метод Err вернет любую ошибку, возникшую во время сканирования,
+	//за исключением того, что если это был io.EOF, Err вернет значение nil.
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+
 	return nil
 }
 

@@ -83,7 +83,7 @@ func or(channels ...<-chan interface{}) <-chan interface{} {
 					break //выходим из цикла for
 				}
 			}
-			/*
+			/*	//Еще оин вариант решения.
 				for v := range ch {//range получает значения из канала пока он не закрыт
 					out <- v
 				}
@@ -91,7 +91,7 @@ func or(channels ...<-chan interface{}) <-chan interface{} {
 		}(ch)
 	}
 
-	wg.Wait() //Ждем заершения горутин
+	wg.Wait() //Ждем заершения горутин.
 
 	return out
 }

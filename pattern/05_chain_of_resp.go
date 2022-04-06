@@ -4,6 +4,7 @@
 	https://en.wikipedia.org/wiki/Chain-of-responsibility_pattern
 */
 package main
+
 //Цепочка вызывов — это поведенческий паттерн проектирования, который позволяет передавать запросы последовательно по цепочке обработчиков.
 import "fmt"
 
@@ -98,4 +99,3 @@ func main() {
 	//Отправляем пользовател на проверку
 	NameV.Execute(user)
 }
-

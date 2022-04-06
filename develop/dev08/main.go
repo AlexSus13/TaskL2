@@ -14,7 +14,7 @@ import (
 	"bufio"
 	"fmt"
 	"log"
-	"os" //Пакет os предоставляет независимый от платформы интерфейс к функциям операционной системы.
+	"os"      //Пакет os предоставляет независимый от платформы интерфейс к функциям операционной системы.
 	"os/exec" //Пакет os/exec запускает внешние команды.
 	"strings"
 )
@@ -30,8 +30,8 @@ const (
 
 func main() {
 
-        scanner := bufio.NewScanner(os.Stdin) //Создаем новый сканер
-        for scanner.Scan() { //В бесконечном цикле считываем команды из os.Stdin
+	scanner := bufio.NewScanner(os.Stdin) //Создаем новый сканер
+	for scanner.Scan() {                  //В бесконечном цикле считываем команды из os.Stdin
 
 		fullCommand := scanner.Text() //Получаем отсканированный текст.
 
@@ -68,7 +68,7 @@ func runCommand(fullCommand string) error {
 		cmd.Stderr = os.Stderr
 		cmd.Stdout = os.Stdout
 		//Run запускает указанную команду и ждет ее завершения.
-		//Возвращаемая ошибка равна нулю, если команда выполняется, 
+		//Возвращаемая ошибка равна нулю, если команда выполняется,
 		//не имеет проблем с копированием stdin, stdout и stderr и завершается с нулевым статусом выхода.
 		return cmd.Run()
 	case cd:

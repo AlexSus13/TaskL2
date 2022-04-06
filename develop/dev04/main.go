@@ -45,7 +45,7 @@ func main() {
 func Search(words []string) map[string][]string {
 
 	result := make(map[string][]string) //результат
-	tempMap := make(map[string]string) //map для проверки сортированных слов
+	tempMap := make(map[string]string)  //map для проверки сортированных слов
 
 	for _, word := range words { //Проходимся по слайсу
 		word := strings.ToLower(word) //Делаем все буквы маленькими
@@ -65,8 +65,8 @@ func Search(words []string) map[string][]string {
 		//Если отсортированное слово есть во временной map и это слово не равно
 		//ранее добавленной анаграмме
 		if value, ok := tempMap[sortWord]; ok && value != word {
-			result[value] = append(result[value], word)//добавляем слово в результирующую map,
-								   //в качестве ключа используя первую анограмму
+			result[value] = append(result[value], word) //добавляем слово в результирующую map,
+			//в качестве ключа используя первую анограмму
 		} else {
 			tempMap[sortWord] = word
 		}

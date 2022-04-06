@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -12,7 +13,6 @@ import (
 	"strings"
 	"syscall"
 	"time"
-	"context"
 )
 
 /*
@@ -65,6 +65,7 @@ func telnetClient(args *args) error {
 
 	signalChan := make(chan os.Signal, 1)
 	defer close(signalChan)
+
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
 	go func() {
@@ -85,7 +86,7 @@ func readFromSocket(conn net.Conn, cancel context.CancelFunc) {
 	scanner := bufio.NewScanner(conn)
 	for {
 		if !scanner.Scan() {
-			log.Printf("соединение было прервано")
+			log.Printf("Connection was interrupted")
 			cancel()
 			return
 		}
@@ -108,7 +109,7 @@ func writeToSocket(conn net.Conn, cancel context.CancelFunc) {
 		sl := strings.Split(fmt.Sprintf("% x", str), " ")
 		for _, u := range sl {
 			if u == "04" {
-				log.Println("вы нажали ctrl+D. telnet клиент будет закрыт!")
+				log.Println(`You have pressed "ctrl+D", the telnet client will be closed.`)
 				cancel()
 				return
 			}
@@ -116,7 +117,7 @@ func writeToSocket(conn net.Conn, cancel context.CancelFunc) {
 		}
 		_, err := conn.Write([]byte(fmt.Sprintln(str)))
 		if err != nil {
-			log.Println("ошибка при отправке на сервер", err)
+			log.Println("Error when sending to the server", err)
 			cancel()
 			return
 		}

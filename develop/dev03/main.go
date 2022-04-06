@@ -1,9 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
-	"bufio"
 	"log"
 	"os"
 	"sort"
@@ -67,15 +67,15 @@ func (ObS *ObjectSort) Sort() error {
 	}
 	defer file.Close()
 
-	scanner := bufio.NewScanner(file) //NewScanner возвращает новый сканер(*Scanner) для чтения из "file". 
-					  //Функция разделения по умолчанию использует ScanLines.
+	scanner := bufio.NewScanner(file) //NewScanner возвращает новый сканер(*Scanner) для чтения из "file".
+	//Функция разделения по умолчанию использует ScanLines.
 
-	//Scan переводит Scanner на следующий объект, который затем будет доступен с помощью метода Bytes или Text. 
-	//Он возвращает значение false, когда сканирование останавливается, либо при достижении конца ввода, либо при ошибке. 
+	//Scan переводит Scanner на следующий объект, который затем будет доступен с помощью метода Bytes или Text.
+	//Он возвращает значение false, когда сканирование останавливается, либо при достижении конца ввода, либо при ошибке.
 	for scanner.Scan() {
-		ObS.data = append(ObS.data, scanner.Text())//Добавляем строки в слайс
+		ObS.data = append(ObS.data, scanner.Text()) //Добавляем строки в слайс
 	}
-	//После того, как Scan вернет значение false, метод Err вернет любую ошибку, возникшую во время сканирования, 
+	//После того, как Scan вернет значение false, метод Err вернет любую ошибку, возникшую во время сканирования,
 	//за исключением того, что если это был io.EOF, Err вернет значение nil.
 	if err := scanner.Err(); err != nil {
 		return err

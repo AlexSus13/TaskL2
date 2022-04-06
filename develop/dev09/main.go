@@ -11,32 +11,32 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	errorss "github.com/pkg/errors"
 
+	"bytes"
 	"errors"
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
-	"time"
 	"strings"
-	"fmt"
-	"bytes"
+	"time"
 )
 
-
-
 type flags struct {
-	r   *bool   //включение рекурсивной загрузки
-	l   *int    //глубина рекурсии
-	O   *string //изменить имя сохраненного файла
+	r *bool   //включение рекурсивной загрузки
+	l *int    //глубина рекурсии
+	O *string //изменить имя сохраненного файла
 }
 
 type ObjectWget struct {
-        flags
-	URL string
-        pathToSaveFiles string
-	uniqueLinks map[string]struct{}
+	flags
+	URL             string
+	pathToSaveFiles string
+	uniqueLinks     map[string]bool
 }
+
 func main() {
 
 	ObjectWget := NewObjectWget()
@@ -72,33 +72,34 @@ func (ow *ObjectWget) Wget() error {
 	return nil
 }
 
-func GetHTML(link  string, ow *ObjectWget) error {
+func GetHTML(link string, ow *ObjectWget) error {
 
+	link = strings.TrimSuffix(link, "/")
 
-	//Если ссылка есть в мап, значит страница скачена.
-	if _, ok := ow.uniqueLinks[link]; ok {
-		return nil
-	} else {
-		ow.uniqueLinks[link] = struct{}{}
+	//Если у ссылкы в мап значение false, значит страница скачена.
+	if _, ok := ow.uniqueLinks[link]; !ok {
+		ow.uniqueLinks[link] = true
 	}
 
-        //Client с Timeout.
-        client := http.Client{
-                Timeout: 5 * time.Second,
-        }
+	//Client с Timeout.
+	client := http.Client{
+		Timeout: 5 * time.Second,
+	}
 
-        //Получаем ответ в байтах по url.
-        r, err := client.Get(link)
-        if err != nil {
-                return errorss.Wrap(err, "func client.Get(f.Url)")
-        }
-        defer r.Body.Close()
+	//Получаем ответ в байтах по url.
+	r, err := client.Get(link)
+	if err != nil {
+		return errorss.Wrap(err, "func client.Get(f.Url)")
+	}
+	defer r.Body.Close()
 
-        //Проверяем статус код ответа.
-        if r.StatusCode != 200 {
-                return errors.New("Received non 200 response code")
-        }
+	//Проверяем статус код ответа.
+	if r.StatusCode != 200 {
+		ow.uniqueLinks[link] = false
+		return nil
+	}
 
+	//Читаем тело запроса
 	FileContents, err := io.ReadAll(r.Body)
 	if err != nil {
 		return errorss.Wrap(err, "func io.ReadAll(r.Body)")
@@ -108,40 +109,47 @@ func GetHTML(link  string, ow *ObjectWget) error {
 	//FileContents []byte - объект типа io.Reader.
 	repBody := bytes.NewReader(FileContents)
 
-        //NewDocumentFromReader возвращает документ из io.Reader.
-        //Он возвращает ошибку в качестве второго значения, если
-        //данные не могут быть проанализированы как html.
-        //doc структура типа *Document, представляет HTML-документ.
-        doc, err := goquery.NewDocumentFromReader(repBody)
-        if err != nil {
-                return errorss.Wrap(err, "func goquery.NewDocumentFromReader")
-        }
+	//NewDocumentFromReader возвращает документ из io.Reader.
+	//Он возвращает ошибку в качестве второго значения, если
+	//данные не могут быть проанализированы как html.
+	//doc структура типа *Document, представляет HTML-документ.
+	doc, err := goquery.NewDocumentFromReader(repBody)
+	if err != nil {
+		return errorss.Wrap(err, "func goquery.NewDocumentFromReader")
+	}
 
-        doc.Find("a").Each(func(index int, selectObj *goquery.Selection) {
+	doc.Find("a").Each(func(index int, selectObj *goquery.Selection) {
 
-                link, _ := selectObj.Attr("href")
+		link, _ := selectObj.Attr("href")
 
-		if _, ok := ow.uniqueLinks[link]; !ok {
-			ow.uniqueLinks[link] = struct{}{}
+		link = strings.TrimSuffix(link, "/")
+
+		if len(link) > 1 {
+			if _, ok := ow.uniqueLinks[link]; !ok {
+				ow.uniqueLinks[link] = true
+			} else {
+				ow.uniqueLinks[link] = false
+			}
 		}
-        })
+	})
 
-	fmt.Println("MAP", ow.uniqueLinks)
 	//Сохраняем файл.
 	err = SaveFile(FileContents, link, ow)
 
-	//Если выключена рекурсивная загрузка или глубина рекурсии равна 1,
+	//Если выключена рекурсивная загрузка и глубина рекурсии >= 1,
 	//то скачаются ссылки только первой страницы страницы.
-	if *ow.flags.r || *ow.flags.l == 1 {
+	if (*ow.flags.r && *ow.flags.l >= 1) || *ow.flags.l == 1 {
 
-		fmt.Println("recurs")
 		*ow.flags.l--
 
-		for link, _ := range ow.uniqueLinks {
-			err := GetHTML(link, ow)
-			if err != nil {
-				return err
+		for link, canUse := range ow.uniqueLinks {
+			if canUse {
+				err := GetHTML(link, ow)
+				if err != nil {
+					return err
+				}
 			}
+			ow.uniqueLinks[link] = false
 		}
 	}
 
@@ -151,21 +159,38 @@ func GetHTML(link  string, ow *ObjectWget) error {
 func SaveFile(FileContents []byte, link string, ow *ObjectWget) error {
 
 	//"Парсинг URL"
-	link = strings.TrimPrefix(link, "http://")
-	link = strings.TrimPrefix(link, "http://")
-	link = strings.TrimSuffix(link, "/")
+	u, err := url.Parse(link)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	FN := fmt.Sprintf("%s.html", link )
+	var FN string
+	var path string
+	if *ow.flags.l == 1 && !*ow.flags.r {
+		FN = *ow.flags.O
+	} else {
+		path = strings.TrimPrefix(u.Path, "/")
+		err := os.MkdirAll(ow.pathToSaveFiles+path, 0777)
+		if err != nil {
+			return errorss.Wrap(err, "func os.MkdirAll, SaveFile")
+		}
+		FN = fmt.Sprintf("/%s.html", u.Hostname())
+
+	}
+
 	//Создаем файл по указанному пути.
-        file, err := os.Create(ow.pathToSaveFiles + FN)
-        if err != nil {
-                return err
-        }
-        defer file.Close()
+	file, err := os.Create(ow.pathToSaveFiles + path + FN)
+	if err != nil {
+		return errorss.Wrap(err, "func os.Create")
+	}
+	defer file.Close()
 
-        file.Write(FileContents)
+	_, err = file.Write(FileContents)
+	if err != nil {
+		return errorss.Wrap(err, "func file.Write")
+	}
 
-        return nil
+	return nil
 }
 
 func NewObjectWget() *ObjectWget {
@@ -184,14 +209,14 @@ func NewObjectWget() *ObjectWget {
 	//иначе они всегда будет содержать значение по умолчанию.
 	//Если есть ошибки во время извлечения данных - приложение будет остановлено.
 
-        return &ObjectWget{
-                flags: flags{
-                        r: r,
-                        l: l,
-                        O: O,
-                },
-		URL: URL,
-		uniqueLinks: make(map[string]struct{}),
+	return &ObjectWget{
+		flags: flags{
+			r: r,
+			l: l,
+			O: O,
+		},
+		URL:             URL,
+		uniqueLinks:     make(map[string]bool),
 		pathToSaveFiles: "newWget/",
-        }
+	}
 }

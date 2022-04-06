@@ -12,6 +12,7 @@ package main
 import (
 	"fmt"
 )
+
 //Объект реализует интерфейс device
 type device interface {
 	on()
@@ -22,6 +23,7 @@ type device interface {
 type tv struct {
 	isRunning bool
 }
+
 //Методы Объекта
 func (t *tv) on() {
 	t.isRunning = true
@@ -44,6 +46,7 @@ type command interface {
 type offCommand struct {
 	device device
 }
+
 //Методы "активируют" методы Объекта
 func (c *offCommand) execute() {
 	c.device.off()
@@ -56,11 +59,13 @@ type onCommand struct {
 func (c *onCommand) execute() {
 	c.device.on()
 }
+
 //Создаем структуру которая принимает объект который
 //реализует интерфейс выполнения(execute)
 type button struct {
 	command command
 }
+
 //У структуры есть метод который "активируюет" метод
 //выполнения(execute)
 func (b *button) press() {
@@ -88,4 +93,3 @@ func main() {
 
 	offButton.press()
 }
-

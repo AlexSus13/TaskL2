@@ -1,11 +1,11 @@
 package main
 
 import (
-	"log"
 	"bufio"
 	"errors"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 )
@@ -62,25 +62,25 @@ func (ObG *ObjectGrep) Grep() error {
 		return errors.New("Add a pattern for the search")
 	}
 
-        file, err := os.Open(os.Args[len(os.Args)-1]) //Открываем файл указанный в командной строке.
-        if err != nil {
-                return err
-        }
-        defer file.Close()
+	file, err := os.Open(os.Args[len(os.Args)-1]) //Открываем файл указанный в командной строке.
+	if err != nil {
+		return err
+	}
+	defer file.Close()
 
-        scanner := bufio.NewScanner(file) //NewScanner возвращает новый сканер(*Scanner) для чтения из "file".
-                                          //Функция разделения по умолчанию использует ScanLines.
+	scanner := bufio.NewScanner(file) //NewScanner возвращает новый сканер(*Scanner) для чтения из "file".
+	//Функция разделения по умолчанию использует ScanLines.
 
-        //Scan переводит Scanner на следующий объект, который затем будет доступен с помощью метода Bytes или Text.
-        //Он возвращает значение false, когда сканирование останавливается, либо при достижении конца ввода, либо при ошибке.
-        for scanner.Scan() {
-                ObG.data = append(ObG.data, scanner.Text())//Добавляем строки в слайс
-        }
-        //После того, как Scan вернет значение false, метод Err вернет любую ошибку, возникшую во время сканирования,
-        //за исключением того, что если это был io.EOF, Err вернет значение nil.
-        if err := scanner.Err(); err != nil {
-                return err
-        }
+	//Scan переводит Scanner на следующий объект, который затем будет доступен с помощью метода Bytes или Text.
+	//Он возвращает значение false, когда сканирование останавливается, либо при достижении конца ввода, либо при ошибке.
+	for scanner.Scan() {
+		ObG.data = append(ObG.data, scanner.Text()) //Добавляем строки в слайс
+	}
+	//После того, как Scan вернет значение false, метод Err вернет любую ошибку, возникшую во время сканирования,
+	//за исключением того, что если это был io.EOF, Err вернет значение nil.
+	if err := scanner.Err(); err != nil {
+		return err
+	}
 
 	if *ObG.C > 0 {
 		*ObG.A = *ObG.C

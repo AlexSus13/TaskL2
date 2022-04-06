@@ -246,4 +246,3 @@ func main() {
 	}
 	fmt.Println("После пополнения: ", PaymentFacade.User.Name, PaymentFacade.User.SMS, PaymentFacade.Card.Balance)
 }
-

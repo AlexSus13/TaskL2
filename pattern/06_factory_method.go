@@ -6,16 +6,19 @@
 package main
 
 import "fmt"
+
 //Интерфейс который реализует Объект
 type ICar interface {
 	GetName() string
 	GetSpeed() int
 }
+
 //Объект
 type Car struct {
 	Name  string
 	Speed int
 }
+
 //Методы Объекта
 func (c *Car) GetName() string {
 	return c.Name
@@ -24,16 +27,18 @@ func (c *Car) GetName() string {
 func (c *Car) GetSpeed() int {
 	return c.Speed
 }
+
 //Создаем новую структуру которая будет наследовать методы
 //Объекта ==> структура будет реализовывать интерфейс ICar
 type Audi struct {
 	Car
 }
+
 //Поскольку структура Audi реализует интерфейс ICar
 //мы можем ее вернуть как объект типа ICar
 func NewAudi() ICar {
 	return &Audi{
-		Car: Car {
+		Car: Car{
 			Name:  "Audi",
 			Speed: 210,
 		},
@@ -46,12 +51,13 @@ type BMW struct {
 
 func NewBMW() ICar {
 	return &BMW{
-		Car: Car {
+		Car: Car{
 			Name:  "BMW",
 			Speed: 230,
 		},
 	}
 }
+
 //Мы можем создавать струкуры в зависимости от входных данных
 func GetCar(s string) (ICar, error) {
 	switch s {
